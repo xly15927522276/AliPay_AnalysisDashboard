@@ -1,0 +1,496 @@
+﻿@*@{
+        ViewBag.Title = "Ui";
+    }*@
+
+<h2>Ui</h2>
+<body id="body">
+    <div class="container">
+        <p id="p1">页面展示</p>
+        <div>
+            @*@using (Html.BeginForm("OptionTime", "Acquire", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {*@
+            <input type="text" id="date_begin" placeholder="请选择最小时间">
+            <input type="text" id="date_end" placeholder="请选择最大时间">
+            <input type="submit" id="option" value="确定" />
+            @*}*@
+        </div>
+
+    </div>
+    <div id="tc">
+        <div id="main" style="width: 500px;height:400px;"></div>
+        <div id="spending" style="width: 600px;height:400px;"></div>
+        <div id="cross" style="width: 100%;height:400px;"></div>
+    </div>
+</body>
+<style type="text/css">
+    #tc {
+        float: left;
+        /*border: 1px solid;*/
+        width: 100%;
+    }
+
+    #cross {
+        float: left;
+        /*border: 1px solid;*/
+    }
+
+    #spending {
+        float: left;
+    }
+
+    #main {
+        float: left;
+        /*border: 1px solid;*/
+    }
+
+    #body {
+        width: 100%;
+        height: 100%;
+        background-color: #dcf8f0;
+    }
+
+    #date_begin {
+        background-color: #dcf8f0;
+        margin-bottom: 10px;
+        border-radius: 3px
+    }
+
+    #date_end {
+        background-color: #dcf8f0;
+        margin-bottom: 10px;
+        border-radius: 3px
+    }
+
+    #option {
+        background-color: #dcf8f0;
+        width: 100px;
+        border-radius: 3px
+    }
+</style>
+@section scripts
+{
+    <link href="~/Content/bootstrap-datepicker3.css" rel="stylesheet" />
+    <script src="~/Scripts/bootstrap-datepicker.js"></script>
+    <script src="~/Scripts/bootstrap-datepicker.zh-CN.min.js"></script>
+    <script src="~/Scripts/echarts.min.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.4.1.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+        $(function () {
+            //引用自动生成的集线器代理
+            var chat = $.connection.serverHub;
+            //定义服务器调用的客户端sendMessage来显示新消息
+            chat.client.connectrunt = function (lianjie) {
+                $('#p1').html(lianjie);
+            }
+            chat.client.optiontime = function () {
+                chat.server.pie();
+                chat.server.cross();
+                chat.server.expenditureData();
+            }
+            chat.client.expendituredata = function (res) {
+
+                var myChart = echarts.init(document.getElementById('spending'));
+                var option = {
+                    title: {
+                        text: '支出类型',
+                        subtext: '数据来自淘宝'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    legend: {
+                        data: res.name
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'value',
+                        boundaryGap: [0, 0.01]
+                    },
+                    yAxis: {
+                        type: 'category',
+                        inverse: true,
+                        data: (function () {
+                            var arrNum = [];
+                            for (var i = 0; i < res.SpendingName.length; i++) {
+                                arrNum.push(res.SpendingName[i]);
+                            }
+                            //console.log(arrNum);
+                            return arrNum;
+                        })()
+                    },
+                    series: (function () {
+                        var arrNum = [];
+                        arrNum.push({
+                            "name": res.name, type: 'bar', "data": (function () {
+                                var num = [];
+                                for (var i = 0; i < res.Spending.length; i++) {
+                                    num.push(res.Spending[i]);
+                                }
+                                return num;
+                            })(),
+                            label: {
+                                normal: {
+                                    formatter: function (params) {
+                                        return params.value + "元";
+                                    },
+                                    show: true,
+                                    color: 'black',
+                                    position: 'right'
+                                }
+                            }
+                        });
+                        return arrNum;
+                    })()
+                };
+                myChart.setOption(option);
+            }
+            chat.client.pieres = function (res) {
+                //console.log(res);
+                var names = new Array();
+                var namsesvalue = new Array();
+                for (var i = 0; i < res.length; i++) {
+                    names[i] = res[i].IncomeAndExpenses;
+                    namsesvalue[res[i].IncomeAndExpenses] = res[i].SumMoney;
+                }
+                var myChart = echarts.init(document.getElementById('main'));
+                // 指定图表的配置项和数据
+                var option = {
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 10,
+                        name: (function () {
+                            var arrNum = [];
+                            for (var i = 0; i < names.length; i++) {
+                                arrNum.push(names[i]);
+                            }
+                            return arrNum;
+                        })()
+                    },
+                    series: [
+                        {
+                            name: '账单收支',
+                            type: 'pie',
+                            radius: ['50%', '70%'],
+                            avoidLabelOverlap: false,
+                            label: {
+                                show: false,
+                                position: 'center'
+                            },
+                            //emphasis: {
+                            //    label: {
+                            //        show: true,
+                            //        fontSize: '30',
+                            //        fontWeight: 'bold'
+                            //    }
+                            //},
+                            labelLine: {
+                                lineStyle: {
+                                    color: 'black'
+                                },
+                                smooth: 0.2,
+                                length: 10,
+                                length2: 20
+                            },
+                            data: (function () {
+                                var arrNum = [];
+                                for (var key in namsesvalue) {
+                                    arrNum.push({ "value": namsesvalue[key], "name": key });
+                                }
+                                return arrNum;
+                            })(),
+                            //roam: false, //是否开启拖拽漫游（移动和缩放）
+                            nodeClick: false, //点击节点后的行为,false无反应
+                            itemStyle: {
+                                normal: {
+                                    label: {
+                                        show: true, //是否显示名称
+                                        formatter: function (params) {
+                                            return params.value + "元"
+                                        }
+                                    },
+                                    borderWidth: 1,
+                                }
+                            }
+                        }
+                    ]
+                };
+                //console.log(option)
+                // 使用刚指定的配置项和数据显示图表。
+                myChart.setOption(option);
+            }
+            chat.client.crossres = function (res) {
+                var myChart = echarts.init(document.getElementById('cross'));
+                var option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross',
+                            crossStyle: {
+                                color: '#999'
+                            }
+                        }
+                    },
+                    toolbox: {
+                        feature: {
+                            dataView: { show: true, readOnly: false },
+                            magicType: { show: true, type: ['line', 'bar'] },
+                            restore: { show: true },
+                            saveAsImage: { show: true }
+                        }
+                    },
+                    legend: {
+                        data: ['收入', '支出', '环比']
+                    },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            data: (function () {
+                                var arrNum = [];
+                                for (var i = 0; i < res.PaymentTimeYM.length; i++) {
+                                    arrNum.push(res.PaymentTimeYM[i]);
+                                }
+                                return arrNum;
+                            })(),
+                            axisPointer: {
+                                type: 'shadow'
+                            },
+                            axisLabel: {
+                                interval: 0,//横轴信息全部显示
+                                rotate: 30,//-30度角倾斜显示
+                                formatter: function (value) {
+                                    let valuetxt = '';
+                                    if (value.length > 8) {
+                                        valuetxt = value.substring(0, 8) + '....';
+                                    } else {
+                                        valuetxt = value;
+                                    }
+                                    return valuetxt;
+                                }
+                            }
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: '收支金额',
+                            min: 0,
+                            max: res.IEMax,
+                            interval: (function () {
+                                var c = res.IEMax
+                                if (res.IEMax > 0) {
+                                    c = Math.ceil(res.IEMax / 5);
+                                }
+                                return c;
+                            })(),
+                            axisLabel: {
+                                formatter: '{value} 元'
+                            },
+                            splitLine: {
+                                lineStyle: {
+                                    color: "rgba(176,196,222, 1)"
+                                }
+                            }
+                        },
+                        {
+                            type: 'value',
+                            name: '环比%',
+                            min: (function () {
+                                var c = res.MinLinkRelative;
+                                console.log(c);
+                                if (c < 0) {
+                                    return c;
+                                }
+                                else {
+                                    return 0;
+                                }
+                            })(),
+                            max: (function () {
+                                var c = res.MaxLinkRelative
+                                if (c > 100) {
+                                    return c;
+                                }
+                                else {
+                                    return 100;
+                                }
+                            })(),
+                            interval: (function () {
+                                if (res.MaxLinkRelative <= 100 && res.MinLinkRelative >= 0) {
+                                    return 20;
+                                }
+                                else {
+                                    var c = res.MaxLinkRelative - res.MinLinkRelative;
+                                    c = Math.ceil(c / 5);
+                                    return c;
+                                }
+                            })(),
+                            axisLabel: {
+                                formatter: '{value} %'
+                            },
+                            splitLine: {
+                                lineStyle: {
+                                    color: "rgba(176,196,222, 1)"
+                                }
+                            }
+                        }
+                    ],
+                    dataZoom: [{
+                        type: 'slider',
+                        show: false,
+                        realtime: true, //拖动滚动条时是否动态的更新图表数据
+                        bottom: -10,
+                        height: 25,//滚动条高度
+                        start: 0,//滚动条开始位置（共100等份）
+                        end: 60//结束位置（共100等份）
+                    },
+                    {
+                        type: 'inside',
+                        startValue: 1,
+                        endValue: 10,
+                        zoomOnMouseWheel: false,
+                        moveOnMouseWheel: true
+                    }],
+                    series: [
+                        {
+                            name: '收入',
+                            type: 'bar',
+                            data: (function () {
+                                var arrNum = [];
+                                for (var i = 0; i < res.Income.length; i++) {
+                                    arrNum.push(res.Income[i]);
+                                }
+                                return arrNum;
+                            })(),
+                            label: {
+                                normal: {
+                                    formatter: function (params) {
+                                        return params.value + '元';
+                                    },
+                                    show: true,
+                                    color: 'black',
+                                    position: 'top'
+                                }
+                            }
+                        },
+                        {
+                            name: '支出',
+                            type: 'bar',
+                            data: (function () {
+                                var arrNum = [];
+                                for (var i = 0; i < res.Expenditure.length; i++) {
+                                    arrNum.push(res.Expenditure[i]);
+                                }
+                                return arrNum;
+                            })(),
+                            label: {
+                                normal: {
+                                    formatter: function (params) {
+                                        return params.value + '元';
+                                    },
+                                    show: true,
+                                    color: 'black',
+                                    position: 'top'
+                                }
+                            }
+                        },
+                        {
+                            name: '环比',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            data: (function () {
+                                var arrNum = [];
+                                for (var i = 0; i < res.LinkRelative.length; i++) {
+                                    arrNum.push(res.LinkRelative[i]);
+                                    console.log(res.LinkRelative[i]);
+                                }
+                                return arrNum;
+                            })(),
+                            label: {
+                                normal: {
+                                    formatter: function (params) {
+                                        return params.value + '%';
+                                    },
+                                    show: true,
+                                    color: 'black',
+                                    position: 'top',
+                                }
+                            }
+                        }
+                    ]
+                };
+                myChart.setOption(option);
+            }
+            //设置焦点到输入框
+            //$('#message').focus();
+            //开始连接服务器
+            $.connection.hub.start().done(function () {
+                //$('#sendmessage').click(function () {
+                //    //调用服务器端集线器的Send方法
+                //    chat.server.sendMsg($('#message').val());
+                //    //清空输入框信息并获取焦点
+                //    $("#message").val('').focus();
+                //})
+                chat.server.optionTime();
+                chat.server.connect();
+                chat.server.pie();
+                chat.server.cross();
+                chat.server.expenditureData();
+            })
+            $('#option').click(function () {
+                chat.server.optionTime($('#date_begin').val(), $('#date_end').val());
+            })
+        });
+        function DatePicker(beginSelector, endSelector) {
+            // 仅选择日期
+            $(beginSelector).datepicker(
+                {
+                    language: "zh-CN",
+                    autoclose: true,
+                    startView: 0,
+                    format: "yyyy-mm-dd",
+                    clearBtn: true,
+                    todayBtn: false,
+                    endDate: new Date()
+                }).on('changeDate', function (ev) {
+                    if (ev.date) {
+                        //console.log(new Date(ev.date.valueOf()));
+                        $(endSelector).datepicker('setStartDate', new Date(ev.date.valueOf()))
+                    } else {
+                        $(endSelector).datepicker('setStartDate', null);
+                    }
+                });
+
+            $(endSelector).datepicker(
+                {
+                    language: "zh-CN",
+                    autoclose: true,
+                    startView: 0,
+                    format: "yyyy-mm-dd",
+                    clearBtn: true,
+                    todayBtn: false,
+                    endDate: new Date()
+                }).on('changeDate', function (ev) {
+                    if (ev.date) {
+                        $(beginSelector).datepicker('setEndDate', new Date(ev.date.valueOf()))
+                    } else {
+                        $(beginSelector).datepicker('setEndDate', new Date());
+                    }
+
+                })
+        }
+        DatePicker("#date_begin", "#date_end");
+    </script>
+}
+

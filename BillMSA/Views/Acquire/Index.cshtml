@@ -1,0 +1,81 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <style type="text/css">
+        #big {
+            /*justify-content: center;
+            display: flex;
+            align-items: center;*/
+            margin: 0px auto;
+            margin-top: 200px;
+            height: 250px;
+            width: 500px;
+            border: 1px solid;
+            background: white;
+            border-radius:10px
+        }
+        #body {
+            background-image: url(./images/b3.jpeg);
+            position: relative;
+            width: 99%;
+            height: 100%;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-size: cover;
+            /*float: left;*/
+            /*background-image: url(./images/b3.jpeg);*/
+            /*position: absolute;
+            top: 0;
+            left: 0;*/
+            /*min-width: 1000px;
+            z-index: -10;
+            zoom: 1;
+            background-repeat: no-repeat;
+            background-size: cover;
+            -webkit-background-size: cover;
+            -o-background-size: cover;
+            background-position: center 0;*/
+        }
+        .input_outer {
+            height: 100px;
+            padding: 0 5px;
+            margin-bottom: 30px;
+            border-radius: 30px;
+            position: relative;
+            /*border: rgba(255,255,255,0.2) 2px solid !important;*/
+            /*border:1px solid;*/
+        }
+
+    </style>
+</head>
+<body id="body">
+    <div id="big">
+        <div class="input_outer">
+            <p>注册</p>
+            @using (Html.BeginForm("ProcessUploadFiles", "Acquire", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <input type="file" name="filename" id="file1"/>
+                <input type="text" name="username" placeholder="请输入用户名" />
+                <input  type="submit" value="开始" />
+            }
+        </div>
+        <div class="input_outer">
+            <p>已存在用户名</p>
+            <form action="/Acquire/DL" method="post">
+
+                    <input type="text" name="textName" placeholder="请输入用户名"/>
+
+                <input type="submit" value="提交" />
+            </form>
+        </div>
+    </div>
+</body>
+</html>

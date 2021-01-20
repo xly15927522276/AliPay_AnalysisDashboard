@@ -1,0 +1,14 @@
+﻿
+@{
+    ViewBag.Title = "Increased";
+}
+
+<h2>Increased</h2>
+<div>
+    @using (Html.BeginForm("IncreasedData", "Acquire", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        <input type="file" name="filename" id="file1" />
+        <input type="submit" value="开始" />
+    }
+</div>
+
