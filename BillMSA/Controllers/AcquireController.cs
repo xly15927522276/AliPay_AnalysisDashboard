@@ -18,7 +18,7 @@ namespace BillMSA.Controllers
         [HttpPost]
         public ActionResult ProcessUploadFiles(HttpPostedFileBase filename, string username)
         {
-
+            //只是提交测试 不用在意
             if (filename != null && username != null)
             {
                 if (BillSever.GetInstance().Judge(username))
